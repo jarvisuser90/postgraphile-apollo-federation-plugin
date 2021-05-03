@@ -3,9 +3,9 @@
     "preserveWatchOutput": true,
 
     "rootDir": "src",
-    "outDir": "build",
+    "outDir": "dist",
     "declaration": true,
-    "declarationDir": "./build",
+    "declarationDir": "./dist",
     "allowJs": false,
     "sourceMap": true,
     "inlineSourceMap": false,
@@ -13,6 +13,7 @@
     "target": "es2017",
     "module": "commonjs",
     "lib": ["es2017", "esnext.asynciterable"],
+    "esModuleInterop": true,
 
     "pretty": true,
     "removeComments": false,
@@ -31,8 +32,7 @@
   },
   "exclude": [
     "node_modules",
-    "build",
-    "build-turbo",
+    "dist",
     "__tests__",
     "**/__tests__"
   ]

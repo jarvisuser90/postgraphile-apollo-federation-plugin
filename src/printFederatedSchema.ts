@@ -1,9 +1,5 @@
 import { printSchema } from "@apollo/federation";
-import {
-  transformSchema,
-  FilterTypes,
-  TransformRootFields,
-} from "graphql-tools";
+import { FilterTypes, TransformRootFields, wrapSchema } from "graphql-tools";
 import { GraphQLSchema } from "graphql";
 
 /*
@@ -14,7 +10,7 @@ const FEDERATION_QUERY_FIELDS = ["_entities", "_service"];
 const FEDERATION_TYPE_NAMES = ["_Any", "_FieldSet", "_Service"];
 
 // For memoization:
-let lastSchema: any;
+let lastSchema: unknown;
 let lastPrint: string;
 
 /**
@@ -26,7 +22,7 @@ let lastPrint: string;
  * We've added simple memoization for performance reasons; better memoization
  * may be needed if you're dealing with multiple concurrent GraphQL schemas.
  */
-export default function printFederatedSchema(schema: GraphQLSchema) {
+export default function printFederatedSchema(schema: GraphQLSchema): string {
   // If the schema is new or has changed, recalculate.
   if (schema !== lastSchema) {
     lastSchema = schema;
@@ -39,22 +35,25 @@ export default function printFederatedSchema(schema: GraphQLSchema) {
      * But we need these fields in the schema for resolution to work, so we're
      * removing them from the schema that gets printed only.
      */
-    const schemaSansFederationFields = transformSchema(schema, [
-      // Remove the federation fields:
-      new TransformRootFields((operation, fieldName, _field) => {
-        if (
-          operation === "Query" &&
-          FEDERATION_QUERY_FIELDS.includes(fieldName)
-        ) {
-          // Federation query fields: remove (null).
-          return null;
-        }
-        // No change (undefined).
-        return undefined;
-      }),
-      // Remove the federation types:
-      new FilterTypes(type => !FEDERATION_TYPE_NAMES.includes(type.name)),
-    ]);
+    const schemaSansFederationFields = wrapSchema({
+      schema,
+      transforms: [
+        // Remove the federation fields:
+        new TransformRootFields((operation, fieldName, _field) => {
+          if (
+            operation === "Query" &&
+            FEDERATION_QUERY_FIELDS.includes(fieldName)
+          ) {
+            // Federation query fields: remove (null).
+            return null;
+          }
+          // No change (undefined).
+          return undefined;
+        }),
+        // Remove the federation types:
+        new FilterTypes((type) => !FEDERATION_TYPE_NAMES.includes(type.name)),
+      ],
+    });
 
     // Print the schema, including the federation directives.
     lastPrint = printSchema(schemaSansFederationFields);

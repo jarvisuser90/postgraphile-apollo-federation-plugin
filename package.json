@@ -1,17 +1,17 @@
 {
-  "name": "@graphile/federation",
-  "version": "0.0.3",
+  "name": "@jarvisuser90/postgraphile-apollo-federation-plugin",
+  "version": "0.1.0",
   "description": "Apollo Federation support for Graphile Engine",
-  "main": "build/index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p ./tsconfig.json",
     "lint": "eslint 'src/**/*.ts'",
     "watch": "tsc --watch",
     "test": "./scripts/test"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/graphile/federation.git"
+    "url": "git+https://github.com/jarvisuser90/postgraphile-apollo-federation-plugin.git"
   },
   "keywords": [
     "apollo",
@@ -23,41 +23,43 @@
     "pg",
     "postgresql"
   ],
-  "author": "Benjie Gillam <code@benjiegillam.com>",
+  "author": "John Ciprian",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/graphile/federation/issues"
+    "url": "https://github.com/jarvisuser90/postgraphile-apollo-federation-plugin/issues"
   },
-  "homepage": "https://github.com/graphile/federation#readme",
+  "homepage": "https://github.com/jarvisuser90/postgraphile-apollo-federation-plugin#readme",
   "dependencies": {
-    "@apollo/federation": "^0.11.0",
-    "@types/graphql": "^14.0.0",
+    "@apollo/federation": "^0.24.0",
+    "@types/graphql": "^14.5.0",
     "graphile-utils": "^4.4.5",
-    "graphql-tools": "^4.0.5"
+    "graphql-tools": "^7.0.4"
   },
   "devDependencies": {
-    "@apollo/gateway": "^0.11.0",
-    "@types/jest": "^24.0.13",
-    "@typescript-eslint/eslint-plugin": "^1.7.0",
-    "@typescript-eslint/parser": "^1.7.0",
-    "apollo-server": "^2.9.9",
+    "@apollo/gateway": "^0.28.0",
+    "@types/jest": "^26.0.22",
+    "@typescript-eslint/eslint-plugin": "^4.22.0",
+    "@typescript-eslint/parser": "^4.22.0",
+    "apollo-server": "^2.22.2",
     "axios": "^0.21.1",
-    "eslint": "^5.15.3",
-    "eslint-config-prettier": "^4.1.0",
-    "eslint-plugin-jest": "^22.4.1",
-    "eslint-plugin-prettier": "^3.0.1",
-    "eslint_d": "^7.3.0",
-    "jest": "^24.9.0",
-    "jest-serializer-graphql-schema": "^4.4.6-alpha.0",
-    "pg": "^7.12.1",
-    "postgraphile": "^4.4.4",
-    "postgraphile-core": "^4.4.5",
-    "prettier": "^1.16.4",
-    "ts-jest": "^24.1.0",
-    "typescript": "^3.4.4"
+    "eslint": "^7.24.0",
+    "eslint_d": "^10.0.4",
+    "eslint-config-prettier": "^8.2.0",
+    "eslint-plugin-jest": "^24.3.5",
+    "eslint-plugin-jsdoc": "^33.0.0",
+    "eslint-plugin-prettier": "^3.3.1",
+    "jest": "^26.6.3",
+    "jest-serializer-graphql-schema": "^4.10.0",
+    "pg": "^8.6.0",
+    "postgraphile": "^4.11.0",
+    "postgraphile-core": "^4.11.2",
+    "prettier": "^2.2.1",
+    "ts-jest": "^26.5.4",
+    "typescript": "^4.2.4"
   },
   "peerDependencies": {
-    "graphile-build": "^4.4.2"
+    "graphile-build": "^4.4.2",
+    "graphile-build-pg": "^4.4.5"
   },
   "files": [
     "build"

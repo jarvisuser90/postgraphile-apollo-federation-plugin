@@ -1,6 +1,6 @@
 # The MIT License (MIT)
 
-Copyright © 2019 Benjie Gillam
+Copyright © 2021 John Ciprian
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
