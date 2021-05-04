@@ -3,7 +3,7 @@ jobs:
   # Build the Node project.
   build:
     docker:
-      - image: circleci/node:lts
+      - image: circleci/node:current
 
     steps:
       - checkout
