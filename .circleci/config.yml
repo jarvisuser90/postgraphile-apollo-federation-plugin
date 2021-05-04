@@ -56,29 +56,23 @@ jobs:
           command: npm publish
 
 workflows:
-  # version: 2.1
-  build-publish:
-    # when:
-    #   and:
-    #     - equal: [master, << pipeline.git.branch >>]
-    #     - equal: [/^v.*/, << pipeline.git.tag >>]
-
+  build:
     jobs:
-      # Build on any tag.
-      - build:
+      - build
+      - approval_required:
+          type: approval
+          requires:
+            - build
           filters:
-            branches:
-              only: main
-
-            # This is needed because by default the workflow won't run on the push of a tag.
-            # Here we are forcing the workflow to run even on pushed tags.
             tags:
               only: /^v.*/
+            branches:
+              ignore: /.*/
 
       # Publish NPM package only when tag starts with `v`
       - publish:
           requires:
-            - build
+            - approval_required
           filters:
             tags:
               only: /^v.*/
