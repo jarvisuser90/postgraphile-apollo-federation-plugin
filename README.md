@@ -1,17 +1,17 @@
-# @graphile/federation
+# postgraphile-apollo-federation-plugin
 
 Apollo federation support for PostGraphile (or any Graphile Engine schema).
 
 ## Installation
 
-```
-yarn add postgraphile @graphile/federation
+```shell
+npm install postgraphile-apollo-federation-plugin
 ```
 
 ## CLI usage
 
-```
-postgraphile --append-plugins @graphile/federation
+```shell
+postgraphile --append-plugins postgraphile-apollo-federation-plugin
 ```
 
 ## Library usage
@@ -19,14 +19,16 @@ postgraphile --append-plugins @graphile/federation
 ```js
 const express = require("express");
 const { postgraphile } = require("postgraphile");
-const { default: FederationPlugin } = require("@graphile/federation");
+const { default: postgraphile-apollo-federation-plugin } = require("postgraphile-apollo-federation-plugin");
 
 const app = express();
+
 app.use(
   postgraphile(process.env.DATABASE_URL, "public", {
-    appendPlugins: [FederationPlugin],
+    appendPlugins: [postgraphile-apollo-federation-plugin],
   })
 );
+
 app.listen(process.env.PORT || 3000);
 ```
 

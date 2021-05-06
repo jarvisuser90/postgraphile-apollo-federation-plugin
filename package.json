@@ -1,8 +1,9 @@
 {
   "name": "postgraphile-apollo-federation-plugin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Apollo Federation support for Graphile Engine",
   "main": "dist/index.js",
+  "types": "dist/",
   "scripts": {
     "build": "tsc -p ./tsconfig.json",
     "lint": "eslint 'src/**/*.ts'",
