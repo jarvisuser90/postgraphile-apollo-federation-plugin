@@ -7,13 +7,8 @@ import {
 import { Build, Context, Plugin } from "graphile-build";
 import printFederatedSchema from "./printFederatedSchema";
 import { ObjectTypeDefinition, Directive, StringValue } from "./AST";
-import { PgAttribute, QueryBuilder } from "graphile-build-pg";
-import {
-  DirectiveNode,
-  GraphQLFieldConfigMap,
-  GraphQLObjectTypeConfig,
-  ObjectTypeDefinitionNode,
-} from "graphql";
+import { PgAttribute, PgClass, QueryBuilder, sql } from "graphile-build-pg";
+import { GraphQLFieldConfigMap, GraphQLObjectTypeConfig } from "graphql";
 
 /**
  * This plugin installs the schema outlined in the Apollo Federation spec, and
@@ -107,7 +102,7 @@ const SchemaExtensionPlugin = makeExtendSchemaPlugin(
                 throw new Error("Invalid representation");
               }
 
-              const { __typename, [nodeIdFieldName]: nodeId } = representation;
+              const { __typename, [nodeIdFieldName]: nodeId, ...representationKeys } = representation;
               if (!__typename) {
                 throw new Error(
                   "Failed to interpret representation, no typename",
@@ -129,22 +124,35 @@ const SchemaExtensionPlugin = makeExtendSchemaPlugin(
                 );
               } else {
                 const type = getTypeByName(__typename);
-                const { pgIntrospection: table } = scopeByType.get(type);
+                const table: PgClass = scopeByType.get(type).pgIntrospection.table;
 
-                if (!table.primaryKeyConstraint) {
-                  throw new Error("Failed to interpret representation");
+                // Check if the representation key(s) exist in the type.
+                if (!table.attributes.some((attribute: PgAttribute) => {
+                  representationKeys.includes(inflection.column(attribute.name))
+                })) {
+                  throw new Error("Incorrect representation key(s)");
                 }
-                const {
-                  primaryKeyConstraint: { keyAttributes },
-                } = table;
+
+                let whereFragment;
+
+                // If multiple representation keys are present,
+                // treat them as `OR` logic. Return after the first match.
+                representationKeys.forEach((representationKey: string) => {
+
+                  // Get pg column attribute.
+                  const attr = table.attributes.find(attribute => inflection.column(attribute.name) === representationKey);
+
+                  // If we can't find the user specified representation key,
+                  // skip to the next representation key.
+                  if (!attr) {
+                    return;
+                  }
+
+                  whereFragment = sql.fragment`${sql.identifier(attr.name)} = ${sql.value(representationKey)}`;
+                });
 
                 const whereClause = sql.fragment`(${sql.join(
-                  keyAttributes.map(
-                    (attr: PgAttribute) =>
-                      sql.fragment`${sql.identifier(attr.name)} = ${sql.value(
-                        representation[inflection.column(attr)],
-                      )}`,
-                  ),
+                  whereFragment,
                   ") and (",
                 )})`;
 
@@ -241,6 +249,7 @@ const AddKeyPlugin: Plugin = (builder) => {
       build: Build,
       context: Context<GraphQLObjectTypeConfig<unknown, unknown>>,
     ) => {
+      const { DirectiveNode, ObjectTypeDefinitionNode } = build;
       const {
         scope: { pgIntrospection, isPgRowType },
       } = context;
@@ -271,11 +280,11 @@ const AddKeyPlugin: Plugin = (builder) => {
         ...type.astNode,
       };
 
-      (astNode.directives as DirectiveNode[]).push(
+      (astNode.directives as typeof DirectiveNode[]).push(
         Directive("key", { fields: StringValue(primaryKeyNames.join(" ")) }),
       );
 
-      type.astNode = astNode as ObjectTypeDefinitionNode;
+      type.astNode = astNode as typeof ObjectTypeDefinitionNode;
 
       if (!build.EntityNamesToFederate.includes(type.name)) {
         // Add type name to list so we can use it later to get
