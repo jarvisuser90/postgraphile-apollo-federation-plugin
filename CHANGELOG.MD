@@ -2,6 +2,10 @@
 
 **All major releases are breaking changes.**
 
+## v0.2.1
+
+- Fix: Handling case when `table` could be undefined.
+
 ## v0.2.0
 
 - Updating npm packages to latest versions.

@@ -7,7 +7,11 @@ import {
 import { Build, Context, Plugin } from "graphile-build";
 import printFederatedSchema from "./printFederatedSchema";
 import { ObjectTypeDefinition, Directive, StringValue } from "./AST";
-import { PgAttribute, PgClass, QueryBuilder, sql } from "graphile-build-pg";
+import {
+  PgAttribute,
+  QueryBuilder,
+  SQLGen,
+} from "graphile-build-pg";
 import { GraphQLFieldConfigMap, GraphQLObjectTypeConfig } from "graphql";
 
 /**
@@ -24,7 +28,6 @@ const SchemaExtensionPlugin = makeExtendSchemaPlugin(
       graphql: { GraphQLScalarType, getNullableType },
       resolveNode,
       $$isQuery,
-      $$nodeType,
       getTypeByName,
       scopeByType,
       inflection,
@@ -34,8 +37,11 @@ const SchemaExtensionPlugin = makeExtendSchemaPlugin(
       pgQueryFromResolveData: queryFromResolveData,
       pgPrepareAndRun,
     } = build;
+
     // Cache
     let Query: unknown;
+    let nodeType: string;
+
     return {
       typeDefs: gql`
         """
@@ -102,18 +108,25 @@ const SchemaExtensionPlugin = makeExtendSchemaPlugin(
                 throw new Error("Invalid representation");
               }
 
-              const { __typename, [nodeIdFieldName]: nodeId, ...representationKeys } = representation;
+              const {
+                __typename,
+                [nodeIdFieldName]: nodeId,
+                ...representationKeys
+              } = representation;
+
               if (!__typename) {
                 throw new Error(
                   "Failed to interpret representation, no typename",
                 );
               }
+
               if (nodeId) {
                 if (typeof nodeId !== "string") {
                   throw new Error(
                     "Failed to interpret representation, invalid nodeId",
                   );
                 }
+
                 return resolveNode(
                   nodeId,
                   build,
@@ -124,42 +137,54 @@ const SchemaExtensionPlugin = makeExtendSchemaPlugin(
                 );
               } else {
                 const type = getTypeByName(__typename);
-                const table: PgClass = scopeByType.get(type).pgIntrospection.table;
+
+                if (!type) {
+                  throw new Error("Incorrect representation typename");
+                }
+
+                const { pgIntrospection: table } = scopeByType.get(type);
 
                 // Check if the representation key(s) exist in the type.
-                if (!table.attributes.some((attribute: PgAttribute) => {
-                  representationKeys.includes(inflection.column(attribute.name))
-                })) {
+                if (
+                  !table?.attributes?.some(
+                    (attribute: PgAttribute) =>
+                      representationKeys[inflection.column(attribute)] !=
+                        undefined || null,
+                  )
+                ) {
                   throw new Error("Incorrect representation key(s)");
                 }
 
-                let whereFragment;
+                let whereClause: SQLGen;
 
                 // If multiple representation keys are present,
                 // treat them as `OR` logic. Return after the first match.
-                representationKeys.forEach((representationKey: string) => {
-
+                for (const representationKey in representationKeys) {
                   // Get pg column attribute.
-                  const attr = table.attributes.find(attribute => inflection.column(attribute.name) === representationKey);
+                  const attr = table.attributes.find(
+                    (attribute: PgAttribute) =>
+                      inflection.column(attribute) === representationKey,
+                  );
 
                   // If we can't find the user specified representation key,
                   // skip to the next representation key.
                   if (!attr) {
-                    return;
+                    continue;
                   }
 
-                  whereFragment = sql.fragment`${sql.identifier(attr.name)} = ${sql.value(representationKey)}`;
-                });
+                  whereClause = sql.fragment`${sql.identifier(
+                    attr.name,
+                  )} = ${sql.value(representationKeys[representationKey])}`;
 
-                const whereClause = sql.fragment`(${sql.join(
-                  whereFragment,
-                  ") and (",
-                )})`;
+                  // Stop looping. We only want to return first match.
+                  break;
+                }
 
-                const resolveData = fieldContext.getDataFromParsedResolveInfoFragment(
-                  parseResolveInfo(resolveInfo),
-                  type,
-                );
+                const resolveData =
+                  fieldContext.getDataFromParsedResolveInfoFragment(
+                    parseResolveInfo(resolveInfo),
+                    type,
+                  );
 
                 const query = queryFromResolveData(
                   sql.identifier(table.namespace.name, table.name),
@@ -176,12 +201,12 @@ const SchemaExtensionPlugin = makeExtendSchemaPlugin(
                 );
 
                 const { text, values } = sql.compile(query);
+                const { rows } = await pgPrepareAndRun(pgClient, text, values);
 
-                const {
-                  rows: [row],
-                } = await pgPrepareAndRun(pgClient, text, values);
+                // const result = rows.length > 1 ? rows : rows[0];
+                nodeType = __typename;
 
-                return { [$$nodeType]: __typename, ...row };
+                return { [nodeType]: __typename, ...rows[0] };
               }
             });
           },
@@ -204,8 +229,8 @@ const SchemaExtensionPlugin = makeExtendSchemaPlugin(
             if (value === $$isQuery) {
               if (!Query) Query = getTypeByName(inflection.builtin("Query"));
               return Query;
-            } else if (value[$$nodeType]) {
-              return getNullableType(value[$$nodeType]);
+            } else if (value[nodeType]) {
+              return getNullableType(value[nodeType]);
             }
           },
         },
@@ -267,9 +292,10 @@ const AddKeyPlugin: Plugin = (builder) => {
         return type;
       }
 
-      const primaryKeyNames = pgIntrospection.primaryKeyConstraint.keyAttributes.map(
-        (attr: PgAttribute) => inflection.column(attr),
-      );
+      const primaryKeyNames =
+        pgIntrospection.primaryKeyConstraint.keyAttributes.map(
+          (attr: PgAttribute) => inflection.column(attr),
+        );
 
       if (!primaryKeyNames.length) {
         return type;
