@@ -43,6 +43,15 @@ Specification](https://facebook.github.io/relay/graphql/objectidentification.htm
 
 Requires PostGraphile v4.4.2-rc.0+
 
+## Testing
+
+Docker can be used to spin up a test instance for running Jest tests. The instance will be exposed at port `5432`. See `.env.example` for the exported Postgre connection.
+
+```sh
+docker compose up -d
+./scripts/test
+```
+
 ## Do you need this?
 
 Only use this if you're planning to have your API consumed by Apollo

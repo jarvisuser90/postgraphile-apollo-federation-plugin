@@ -34,7 +34,7 @@
   },
   "homepage": "https://github.com/jarvisuser90/postgraphile-apollo-federation-plugin#readme",
   "dependencies": {
-    "@apollo/federation": "^0.25.0",
+    "@apollo/federation": "^0.33.0",
     "@types/graphql": "^14.5.0",
     "graphile-utils": "^4.4.5",
     "graphql-tools": "^7.0.5"
@@ -47,11 +47,11 @@
     "apollo-server": "^2.22.2",
     "axios": "^0.21.1",
     "eslint": "^7.26.0",
+    "eslint_d": "^10.1.1",
     "eslint-config-prettier": "^8.2.0",
     "eslint-plugin-jest": "^24.3.5",
     "eslint-plugin-jsdoc": "^35",
     "eslint-plugin-prettier": "^3.3.1",
-    "eslint_d": "^10.1.1",
     "jest": "^27",
     "jest-serializer-graphql-schema": "^4.10.0",
     "pg": "^8.6.0",

@@ -175,6 +175,9 @@ const SchemaExtensionPlugin = makeExtendSchemaPlugin(
                   data,
                   context,
                   resolveInfo,
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                ).then((x: any) =>
+                  addTypeNameToPossibleReturn(x, __typename),
                 );
               } else {
                 // Support non node interface keys.
@@ -269,6 +272,8 @@ const AddKeyPlugin: Plugin = (builder) => {
 
     // Add the default federation representation resolver.
     build.defaultResolveReference = defaultResolveReference;
+
+    build.resolveReferences = {}
 
     return build;
   });
